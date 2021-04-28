@@ -4,11 +4,11 @@ export const TodoItemSchemaName = "TodoItem";
 
 export type TodoItem = {
     text: string;
-    controlledBy: string;
+    controlledBy: string | null;
 } & mongoose.Document;
 
 export const TodoItem = mongoose.model<TodoItem>(TodoItemSchemaName, new mongoose.Schema({
     text: String,
-    controlledBy: String,
+    controlledBy: {type: String, default: null},
 }));
 

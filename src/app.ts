@@ -6,7 +6,7 @@ import {FilterQuery, UpdateQuery} from "mongoose";
 
 const port: number = Number(process.env.PORT) || 3000;
 
-enum EventNames {
+enum ApiEvent {
     LIST = "item/list",
     CREATE = "item/create",
     FOCUS = "item/focus",
@@ -34,7 +34,8 @@ socketServer.attach(httpServer);
 const sendAllItems = (socket: io.Socket) => {
     TodoItem.find({})
         .exec()
-        .then((items: TodoItem[]) => socket.emit(EventNames.LIST, items));
+        .then((items: TodoItem[]) => socket.emit(ApiEvent.LIST, items))
+        .catch(error => console.error(error));
 }
 
 const updateItem = (filter: FilterQuery<TodoItem>, update: UpdateQuery<TodoItem>) => {
@@ -43,7 +44,7 @@ const updateItem = (filter: FilterQuery<TodoItem>, update: UpdateQuery<TodoItem>
         .then(item => {
             if(item) {
                 console.log('update: ' + JSON.stringify(item));
-                socketServer.emit(EventNames.UPDATE, item);
+                socketServer.emit(ApiEvent.UPDATE, item);
             }
         })
         .catch(error => console.error(error));
@@ -56,34 +57,34 @@ socketServer.on<"connection">("connection", (socket: io.Socket) => {
     socket.on('disconnect', () => {
         updateItem({controlledBy: socket.id}, {controlledBy: undefined});
     });
-    socket.on(EventNames.CREATE, () => {
+    socket.on(ApiEvent.CREATE, () => {
         new TodoItem({text: ''})
             .save()
             .then((item: TodoItem) => {
-                socketServer.emit(EventNames.UPDATE, item);
+                socketServer.emit(ApiEvent.UPDATE, item);
             })
             .catch(error => console.error(error));
     });
-    socket.on(EventNames.REMOVE, (data: {id: string}) => {
+    socket.on(ApiEvent.REMOVE, (data: {id: string}) => {
         TodoItem.findOneAndRemove({_id: data.id})
             .exec()
             .then(item => {
-                socketServer.emit(EventNames.REMOVE, item);
+                socketServer.emit(ApiEvent.REMOVE, item);
             })
             .catch(error => console.error(error));
     });
-    socket.on(EventNames.FOCUS, (data: {id: string}) => {
+    socket.on(ApiEvent.FOCUS, (data: {id: string}) => {
         updateItem({_id: data.id}, {controlledBy: socket.id});
     });
-    socket.on(EventNames.BLUR, (data: {id: string}) => {
+    socket.on(ApiEvent.BLUR, (data: {id: string}) => {
         updateItem({_id: data.id}, {controlledBy: null});
     });
-    socket.on(EventNames.UPDATE, (data: {id: string, text: string}) => {
+    socket.on(ApiEvent.UPDATE, (data: {id: string, text: string}) => {
         updateItem({_id: data.id}, {controlledBy: socket.id, text: data.text});
     })
     sendAllItems(socket);
 });
 
 httpServer.listen(port, () => {
-    console.log(`Server started on port ${port} :)`);
+    console.log(`Server started on port ${port}`);
 });
