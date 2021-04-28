@@ -21,7 +21,12 @@ mongoose.connect(process.env.MONGOLAB_URI || 'mongodb://127.0.0.1:27017', { useF
     });
 
 const httpServer = http.createServer();
-const socketServer = new io.Server(httpServer);
+const socketServer = new io.Server(httpServer, {
+    cors: {
+        origin: "https://djemeljanovs.github.io",
+        methods: ["GET", "POST"]
+    }
+});
 socketServer.serveClient();
 socketServer.attach(httpServer);
 
