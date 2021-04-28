@@ -1,12 +1,14 @@
 import * as mongoose from 'mongoose';
 
+export const TodoItemSchemaName = "TodoItem";
+
 export type TodoItem = {
-    id: string;
     text: string;
+    controlledBy: string;
 } & mongoose.Document;
 
-export const TodoItemModel = mongoose.model<TodoItem>("TodoItem", new mongoose.Schema({
-    id: String,
+export const TodoItem = mongoose.model<TodoItem>(TodoItemSchemaName, new mongoose.Schema({
     text: String,
+    controlledBy: String,
 }));
 
